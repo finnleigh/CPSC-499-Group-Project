@@ -1,0 +1,33 @@
+3,compost_added,winter_cover_freq,cover_crop_type,cover_crop_seeding_rate,lettuce_yeild,broccoli_yield
+1,No,Every 4th winter,Leg-rye,3x,5299,8511
+2,No,Every 4th winter,Leg-rye,3x,5380,8607
+3,No,Every 4th winter,Leg-rye,3x,5150,7805
+4,No,Every 4th winter,Leg-rye,3x,4890,8110
+1,Yes,Every 4th winter,Leg-rye,3x,5510,8013
+2,Yes,Every 4th winter,Leg-rye,3x,6053,8487
+3,Yes,Every 4th winter,Leg-rye,3x,6108,9021
+4,Yes,Every 4th winter,Leg-rye,3x,5981,8370
+1,Yes,Every winter,Leg-rye,1x,6583,8368
+2,Yes,Every winter,Leg-rye,1x,6765,8676
+3,Yes,Every winter,Leg-rye,1x,6816,8942
+4,Yes,Every winter,Leg-rye,1x,6872,9524
+1,Yes,Every winter,Leg-rye,3x,7289,8426
+2,Yes,Every winter,Leg-rye,3x,7030,10271
+3,Yes,Every winter,Leg-rye,3x,7362,9397
+4,Yes,Every winter,Leg-rye,3x,6831,8845
+1,Yes,Every winter,Mustard,1x,6276,8324
+2,Yes,Every winter,Mustard,1x,6761,8213
+3,Yes,Every winter,Mustard,1x,6752,9315
+4,Yes,Every winter,Mustard,1x,6563,9829
+1,Yes,Every winter,Mustard,3x,6645,8546
+2,Yes,Every winter,Mustard,3x,6717,9944
+3,Yes,Every winter,Mustard,3x,6518,8947
+4,Yes,Every winter,Mustard,3x,6842,9409
+1,Yes,Every winter,Rye,1x,6682,8364
+2,Yes,Every winter,Rye,1x,6558,7989
+3,Yes,Every winter,Rye,1x,6711,9463
+4,Yes,Every winter,Rye,1x,6859,9559
+1,Yes,Every winter,Rye,3x,6879,8698
+2,Yes,Every winter,Rye,3x,6836,8833
+3,Yes,Every winter,Rye,3x,6509,8328
+4,Yes,Every winter,Rye,3x,6520,9125
