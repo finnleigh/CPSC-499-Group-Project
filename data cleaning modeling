@@ -1,0 +1,209 @@
+#' import data 
+library(readxl)
+library(tidyverse)
+
+#' clean sheet 1 
+data_1 = read_excel("White_Data in Brief_Supplemental Tables.xlsx", skip = 1, 
+                  sheet = "Supplementary Table 1") 
+data_1 = data_1[-1, ]
+data_1 = data_1[-c(289:303),]
+
+data_1 = data_1 %>% 
+  rename( block = "Block (i.e. replicate)", 
+          year = "Year", 
+          compost_added = "Compost added6", 
+          winter_cover_freq = "Winer cover cropping frequency7", 
+          cover_crop_type = "Cover crop type8", 
+          cover_crop_seeding_rate = "Cover crop seeding rate8", 
+          TOC_mg_ha = "Total Organic C...13", 
+          TON_ma_ha = "Total N...15", 
+          Nitrate = "Nitrate N"          ) %>% 
+  select(c(block, year, compost_added, winter_cover_freq, cover_crop_type, 
+           cover_crop_seeding_rate, TOC_mg_ha, TON_ma_ha, Nitrate))
+
+#' clean sheet 4 
+data_4 = read_excel("White_Data in Brief_Supplemental Tables.xlsx", skip = 1, 
+                    sheet = "Supplementary Table 4") 
+data_4 = data_4[-1,]
+data_4 = data_4[-c(33:45),]
+
+data_4 = data_4 %>% 
+  rename(block = "Block (i.e. replicate)",
+         compost_added = "Compost added5", 
+         winter_cover_freq = "Winer cover cropping frequency6",
+         cover_crop_type = "Cover crop type7", 
+         cover_crop_seeding_rate = "Cover crop seeding rate7", 
+         lettuce_yeild = "Lettuce Yield", 
+         broccoli_yield = "Broccoli Yield"
+         ) %>% 
+  select(c(block, compost_added, winter_cover_freq, cover_crop_type, 
+           cover_crop_seeding_rate, lettuce_yeild, broccoli_yield))
+
+#' clean sheet 2
+data_2 = read_excel("White_Data in Brief_Supplemental Tables.xlsx", skip = 1, 
+                    sheet = "Supplementary Table 2")  
+
+data_2 = data_2[-1,]
+data_2 = data_2[-c(33:45),]
+
+data_2 = data_2 %>% 
+  rename(cc_shoot_C = "Cover Crop Shoot C", 
+         cc_root_C = "Cover Crop Root C", 
+         cc_root_exudate_C = "Cover Crop Root Exudate C", 
+         veg_shoot_residue_C = "Vegetable Shoot Residue C", 
+         veg_shoot_exudate_C = "Vegetable Root Exudate C", 
+         legume_N_fixation = "Legume N Fixation", 
+         cc_N_uptake = "Cover Crop N Uptake", 
+         veg_residue_N = "Vegetable Residue N", 
+         lettuce_N_uptake = "Lettuce N Uptake", 
+         broccoli_N_uptake = "Broccoli N Uptake", 
+         N_export_lettuce = "N Export in Lettuce Harvest", 
+         N_export_broccoli = "N Export in Broccoli Harvest") %>% 
+  select(c(cc_shoot_C, cc_root_C, cc_root_exudate_C, veg_shoot_residue_C, 
+           veg_shoot_exudate_C, legume_N_fixation, cc_N_uptake, veg_residue_N, 
+           lettuce_N_uptake, broccoli_N_uptake, N_export_lettuce,N_export_broccoli))
+
+comb_2_4 = cbind(data_4, data_2)
+
+
+
+#' convert categorical data into biserial 
+
+comb_2_4 = comb_2_4 %>%
+  mutate(compost_added = if_else(compost_added == "Yes", 1, 0)) %>% 
+  mutate(winter_cover_freq = 
+           if_else(winter_cover_freq == "Every 4th winter", 4, 1)) %>% 
+  mutate(cover_crop_type = if_else(cover_crop_type == "Rye", 1, 
+                           if_else(cover_crop_type == "Leg-rye", 2, 
+                           if_else(cover_crop_type =="Mustard", 3, NA)))) %>% 
+  mutate(cover_crop_seeding_rate = if_else(cover_crop_seeding_rate == "1x", 1, 3)) 
+
+
+data_1 = data_1 %>%
+  mutate(compost_added = if_else(compost_added == "Yes", 1, 0)) %>% 
+  mutate(winter_cover_freq = 
+           if_else(winter_cover_freq == "Every 4th winter", 4, 1)) %>% 
+  mutate(cover_crop_type = if_else(cover_crop_type == "Rye", 1, 
+                                   if_else(cover_crop_type == "Leg-rye", 2, 
+                                           if_else(cover_crop_type =="Mustard", 3, NA)))) %>% 
+  mutate(cover_crop_seeding_rate = if_else(cover_crop_seeding_rate == "1x", 1, 3)) 
+ 
+
+
+write.csv(data_1, "carbon_data.csv", col.names = TRUE, row.names = F) 
+write.csv(comb_2_4, "yield_data.csv", col.names = TRUE, row.names = F)  
+
+
+#' correlation plot 
+library(car)
+library(corrplot)
+
+c = as.data.frame(data_1) 
+y = as.data.frame(comb_2_4)
+
+c$block = as.numeric(c$block)
+c$TOC_mg_ha = as.numeric(c$TOC_mg_ha)
+
+y$block = as.numeric(y$block) 
+y$legume_N_fixation = as.numeric(y$legume_N_fixation)
+y$cc_shoot_C = as.numeric(y$cc_shoot_C)
+y$lettuce_yeild = as.numeric(y$lettuce_yeild)
+
+corr_val_c <- cor(c, method = "spearman")
+corrplot(corr_val_c, method = "number", type = "upper")
+corr_val_y <- cor(y, method = "spearman")
+corrplot(corr_val_y, method = "number", type = "upper") 
+
+
+#' aggregate data  
+
+data_1_year_0 = data_1 %>% 
+  filter(year == 0) 
+data_1_year_1 = data_1 %>% 
+  filter(year == 1) 
+data_1_year_2 = data_1 %>% 
+  filter(year == 2) 
+data_1_year_3 = data_1 %>% 
+  filter(year == 3) 
+data_1_year_4 = data_1 %>% 
+  filter(year == 4) 
+data_1_year_5 = data_1 %>% 
+  filter(year == 5) 
+data_1_year_6 = data_1 %>% 
+  filter(year == 6) 
+data_1_year_7 = data_1 %>% 
+  filter(year == 7) 
+data_1_year_8 = data_1 %>% 
+  filter(year == 8) 
+
+data_1_year_0$id = seq(nrow(data_1_year_0)) 
+data_1_year_1$id = seq(nrow(data_1_year_1)) 
+data_1_year_2$id = seq(nrow(data_1_year_2)) 
+data_1_year_3$id = seq(nrow(data_1_year_3)) 
+data_1_year_4$id = seq(nrow(data_1_year_4)) 
+data_1_year_5$id = seq(nrow(data_1_year_5)) 
+data_1_year_6$id = seq(nrow(data_1_year_6)) 
+data_1_year_7$id = seq(nrow(data_1_year_7)) 
+data_1_year_8$id = seq(nrow(data_1_year_8)) 
+
+
+data_all_years = rbind(data_1_year_0, data_1_year_1, data_1_year_2, 
+                       data_1_year_3, data_1_year_4, data_1_year_5, 
+                       data_1_year_6, data_1_year_7, data_1_year_8)
+
+data_all_years$block = as.numeric(data_all_years$block)
+data_all_years$TOC_mg_ha = as.numeric(data_all_years$TOC_mg_ha)
+data_all_years$id = as.numeric(data_all_years$id)
+
+c_agg = data_all_years %>% 
+  group_by(id) %>% 
+  summarize(block = mean(block), 
+            compost_added = mean(compost_added), 
+            winter_cover_freq = mean(winter_cover_freq), 
+            cover_crop_type = mean(cover_crop_type), 
+            cover_crop_seeding_rate = mean(cover_crop_seeding_rate), 
+            TOC_mg_ha = mean(TOC_mg_ha), 
+            TON_ma_ha = mean(TON_ma_ha), 
+            Nitrate = mean(Nitrate))
+
+y$id = seq(nrow(y)) 
+
+data_agg = left_join(c_agg, y, by = c("id", "compost_added",
+                                      "winter_cover_freq", "cover_crop_type",
+                                      "cover_crop_seeding_rate", "block"))
+
+#' save data 
+write.csv(data_agg, "aggregated_data.csv", col.names = TRUE, row.names = F)  
+
+#' random forest 
+library(randomForest)
+library(ISLR)
+set.seed(123)
+
+#' Split data into training and test sets
+train_idx = sample(nrow(data_agg), nrow(data_agg) * 0.7)
+train = data_agg[train_idx, ]
+test = data_agg[-train_idx, ]
+
+#' Fit random forest model
+rf_model = randomForest(
+  TOC_mg_ha ~ . ,  
+  data = train,
+  ntree = 500,  # Increase the number of trees for better accuracy
+  mtry = sqrt(ncol(train) - 1),  # Number of variables to sample at each split
+  importance = TRUE) 
+
+#' summary
+print(rf_model)
+
+# Make predictions on test set
+preds = predict(rf_model, newdata = test)
+
+#' model performance
+confusion_matrix = table(test$TOC_mg_ha, preds)
+print(confusion_matrix)
+accuracy = sum(diag(confusion_matrix)) / sum(confusion_matrix)
+print(paste0("Accuracy: ", accuracy))
+
+#' variable importance plot
+varImpPlot(rf_model)
