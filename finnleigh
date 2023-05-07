@@ -382,14 +382,24 @@ model_glm = train(TOC_mg_ha ~ .,
 
 print(model_glm)
 p_glm = predict(model_glm, test,  type = "raw") 
+summary(p_glm)
+library(Metrics)
+rmse = rmse(p_glm, test$TOC_mg_ha)
+print(paste0("RMSE: ", rmse))
+R2 = cor(test$TOC_mg_ha, p_glm)^2
+R2
+
 
 #' Glmnet model since glm fit was poor 
 
 model_glmnet = train(TOC_mg_ha ~ .,
                   data = train, 
                   method = "glmnet") 
+p_glmnet = predict(model_glmnet, test) 
+rmse = rmse(p_glmnet, test$TOC_mg_ha)
+print(paste0("RMSE: ", rmse))
 
 print(model_glmnet)
-
-
-max(model_glm[["results"]][["ROC"]])   
+R2 = cor(test$TOC_mg_ha, p_glmnet)^2
+R2
+ 
