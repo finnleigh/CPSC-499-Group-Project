@@ -204,12 +204,10 @@ corrplot(cor_agg, diag = FALSE, type = 'upper', col = COL2('BrBG'),
 
 cor_matrix_filtered = ifelse(cor_agg < 0.8, NA, cor_agg) 
 
-#draw rectangles around the plot of correlation matrix based on the results of hierarchical clustering
 
 #' random forest 
 library(randomForest)
 library(ISLR)
-
 library(caret)
 set.seed(123)
 
@@ -253,24 +251,42 @@ sqrt(mean(error^2))
 
 
 
-# model with PCA - could improve model fit due to highly correlated variables - not working 
+# model with PCA - could improve model fit due to highly correlated variables 
 
 
-model = train(TOC_mg_ha ~ .,
+model_pca = train(TOC_mg_ha ~ .,
               tuneLength = 3,
               data = train, 
               method = "ranger",
               trControl = trainControl(
                 method = "cv", 
-                number = 12, 
+                number = 10, 
                 verboseIter = TRUE, 
               ), 
-              preProcess = "pca")
+              preProcess = c("center", "scale", "pca"))
+
+plot(model_pca)
+print(model_pca)
+
+p= predict(model_pca, test) 
+summary(model_pca)
+
+# working but annoying 
+confusion_matrix = table(test$TOC_mg_ha, p)
+print(confusion_matrix)
+accuracy = sum(diag(confusion_matrix)) / sum(confusion_matrix)
+print(paste0("Accuracy: ", accuracy))
+
+error = p - test[["TOC_mg_ha"]]
+# Calculate RMSE
+sqrt(mean(error^2))  
+
 
 # remove low importance variables from model 
 
 data_agg_trim = data_agg %>% 
-  select(-c(winter_cover_freq, cover_crop_seeding_rate))
+  select(-c(winter_cover_freq, cover_crop_seeding_rate, compost_added, 
+            cover_crop_type))
 
 #' Split data into training and test sets
 train_idx = sample(nrow(data_agg_trim), nrow(data_agg_trim) * 0.7)
@@ -287,10 +303,10 @@ model_trim = train(TOC_mg_ha ~ .,
                 number = 10, 
                 verboseIter = TRUE, 
               ), 
-              preProcess = "knnImpute")
+              preProcess = c( "center", "scale", "pca")) 
 
 plot(model_trim) # 10 is best 
-print(model)
+print(model_trim)
 
 p_trim= predict(model_trim, test) 
 summary(p_trim)
@@ -301,13 +317,39 @@ print(confusion_matrix)
 accuracy = sum(diag(confusion_matrix)) / sum(confusion_matrix)
 print(paste0("Accuracy: ", accuracy))
 
-error = p - test[["TOC_mg_ha"]]
+error = p_trim - test[["TOC_mg_ha"]]
 # Calculate RMSE
 sqrt(mean(error^2))  
 
 
+# create a confusion matrix
+cm = table(p_trim, test$TOC_mg_ha) 
 
-#' Fit random forest model
+# calculate accuracy
+accuracy = sum(diag(cm)) / sum(cm)
+
+# calculate sensitivity (true positive rate)
+sensitivity = cm[2,2] / (cm[2,2] + cm[2,1])
+
+# calculate specificity (true negative rate)
+specificity = cm[1,1] / (cm[1,1] + cm[1,2])
+
+# calculate false positive rate
+fpr = 1 - specificity
+
+# calculate false negative rate
+fnr = 1 - sensitivity
+
+# print confusion matrix and metrics
+cat("Confusion Matrix:\n", cm, "\n")
+cat("Accuracy:", round(accuracy, 3), "\n")
+cat("Sensitivity (True Positive Rate):", round(sensitivity, 3), "\n")
+cat("Specificity (True Negative Rate):", round(specificity, 3), "\n")
+cat("False Positive Rate:", round(fpr, 3), "\n")
+cat("False Negative Rate:", round(fnr, 3), "\n")
+
+#' Fit random forest model - this works to generate var importance plots, that 
+#' was not working with ranger package  
 rf_model = randomForest(
   TOC_mg_ha ~ . ,  
   data = train,
@@ -330,3 +372,24 @@ print(paste0("Accuracy: ", accuracy))
 
 #' variable importance plot
 varImpPlot(model_rf) 
+
+
+#' now that the categorical data is gone, we can fit a glm
+
+model_glm = train(TOC_mg_ha ~ .,
+                  data = train, 
+                  method = "glm") 
+
+print(model_glm)
+p_glm = predict(model_glm, test,  type = "raw") 
+
+#' Glmnet model since glm fit was poor 
+
+model_glmnet = train(TOC_mg_ha ~ .,
+                  data = train, 
+                  method = "glmnet") 
+
+print(model_glmnet)
+
+
+max(model_glm[["results"]][["ROC"]])   
